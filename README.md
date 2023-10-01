@@ -1,7 +1,7 @@
 Первая установка
 -------------------
 В базе дынных только одна таблица
-```postgresql
+```sql
 create table messages
 (
     id               bigserial         primary key,
