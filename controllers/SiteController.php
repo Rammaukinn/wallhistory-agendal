@@ -2,42 +2,15 @@
 
 namespace app\controllers;
 
+use app\models\Message;
+use app\models\MessageForm;
 use Yii;
 use yii\filters\AccessControl;
 use yii\web\Controller;
-use yii\web\Response;
 use yii\filters\VerbFilter;
-use app\models\LoginForm;
-use app\models\ContactForm;
 
 class SiteController extends Controller
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function behaviors()
-    {
-        return [
-            'access' => [
-                'class' => AccessControl::class,
-                'only' => ['logout'],
-                'rules' => [
-                    [
-                        'actions' => ['logout'],
-                        'allow' => true,
-                        'roles' => ['@'],
-                    ],
-                ],
-            ],
-            'verbs' => [
-                'class' => VerbFilter::class,
-                'actions' => [
-                    'logout' => ['post'],
-                ],
-            ],
-        ];
-    }
-
     /**
      * {@inheritdoc}
      */
@@ -61,68 +34,35 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
-        return $this->render('index');
-    }
+        $model = new MessageForm();
 
-    /**
-     * Login action.
-     *
-     * @return Response|string
-     */
-    public function actionLogin()
-    {
-        if (!Yii::$app->user->isGuest) {
-            return $this->goHome();
+        if ($model->load(Yii::$app->request->post()) && $model->validate()) {
+            $ip = Yii::$app->request->userIP;
+            $result_save = $model->new_message($ip);
+
+            if ($result_save['success']) {
+                Yii::$app->session->setFlash('success', 'Сообщение успешно отправлено!');
+            } else {
+                switch ($result_save['error']) {
+                    case MessageForm::ERROR_CHECK_LIMITER:
+                        Yii::$app->session->setFlash('error', 'Вы можете отправлять только одно сообщение каждые три минуты.');
+                        break;
+                    case MessageForm::ERROR_DB:
+                        Yii::$app->session->setFlash('error', 'При отправлении сообщения произошла ошибка, попробуйте позже.');
+                        break;
+                }
+            }
         }
 
-        $model = new LoginForm();
-        if ($model->load(Yii::$app->request->post()) && $model->login()) {
-            return $this->goBack();
-        }
+        $messages = Message::find()
+            ->orderBy('created_at desc')
+            ->all();
 
-        $model->password = '';
-        return $this->render('login', [
-            'model' => $model,
-        ]);
+        return $this->render('index', ['model' => $model, 'messages' => $messages]);
     }
 
-    /**
-     * Logout action.
-     *
-     * @return Response
-     */
-    public function actionLogout()
+    public function actionRules()
     {
-        Yii::$app->user->logout();
-
-        return $this->goHome();
-    }
-
-    /**
-     * Displays contact page.
-     *
-     * @return Response|string
-     */
-    public function actionContact()
-    {
-        $model = new ContactForm();
-        if ($model->load(Yii::$app->request->post()) && $model->contact(Yii::$app->params['adminEmail'])) {
-            Yii::$app->session->setFlash('contactFormSubmitted');
-
-            return $this->refresh();
-        }
-        return $this->render('contact', [
-            'model' => $model,
-        ]);
-    }
-
-    /**
-     * Displays about page.
-     *
-     * @return string
-     */
-    public function actionAbout()
-    {
-        return $this->render('about');
+        return $this->render('rules');
     }
 }

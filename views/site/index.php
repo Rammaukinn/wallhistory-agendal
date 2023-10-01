@@ -2,52 +2,48 @@
 
 /** @var yii\web\View $this */
 
-$this->title = 'My Yii Application';
+use yii\captcha\Captcha;
+use yii\helpers\Html;
+use yii\widgets\ActiveForm;
+use yii\helpers\HtmlPurifier;
+use app\components\helpers\IpFormatter;
+use app\components\helpers\FormatUnixTime;
+
+
+$this->title = 'История';
+
 ?>
-<div class="site-index">
 
-    <div class="jumbotron text-center bg-transparent mt-5 mb-5">
-        <h1 class="display-4">Congratulations!</h1>
-
-        <p class="lead">You have successfully created your Yii-powered application.</p>
-
-        <p><a class="btn btn-lg btn-success" href="https://www.yiiframework.com">Get started with Yii</a></p>
+<div class="row">
+    <div class="col-md-6">
+        <?php foreach ($messages as $message) { ?>
+            <div class="card card-default">
+                <div class="card-body">
+                    <h5 class="card-title"><?= Html::encode($message->name) ?></h5>
+                    <p><?= HtmlPurifier::process($message->content) ?></p>
+                    <p>
+                        <small class="text-muted">
+                            <?= FormatUnixTime::format($message->created_at) ?> |
+                            <?= IpFormatter::hideOctets($message->ip) ?>
+                        </small>
+                    </p>
+                </div>
+            </div>
+        <?php } ?>
     </div>
+    <div class="col-md-6">
+        <?php $form = ActiveForm::begin(); ?>
 
-    <div class="body-content">
+        <?= $form->field($model, 'name')->textInput(['placeholder' => 'Имя']) ?>
 
-        <div class="row">
-            <div class="col-lg-4 mb-3">
-                <h2>Heading</h2>
+        <?= $form->field($model, 'content')->textarea(['rows' => 3, 'placeholder' => 'Ваши гениальные мысли, которые запомнит история']) ?>
 
-                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et
-                    dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip
-                    ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-                    fugiat nulla pariatur.</p>
+        <?= $form->field($model, 'captcha')->widget(Captcha::class) ?>
 
-                <p><a class="btn btn-outline-secondary" href="https://www.yiiframework.com/doc/">Yii Documentation &raquo;</a></p>
-            </div>
-            <div class="col-lg-4 mb-3">
-                <h2>Heading</h2>
-
-                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et
-                    dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip
-                    ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-                    fugiat nulla pariatur.</p>
-
-                <p><a class="btn btn-outline-secondary" href="https://www.yiiframework.com/forum/">Yii Forum &raquo;</a></p>
-            </div>
-            <div class="col-lg-4">
-                <h2>Heading</h2>
-
-                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et
-                    dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip
-                    ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-                    fugiat nulla pariatur.</p>
-
-                <p><a class="btn btn-outline-secondary" href="https://www.yiiframework.com/extensions/">Yii Extensions &raquo;</a></p>
-            </div>
+        <div class="form-group">
+            <?= Html::submitButton('Отправить', ['class' => 'btn btn-success']) ?>
         </div>
 
+        <?php ActiveForm::end(); ?>
     </div>
 </div>
